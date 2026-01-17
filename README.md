@@ -29,7 +29,7 @@ Projekt zawiera:
 
 ## 1) Klon repo
 ```bash
-git clone <REPO_URL>
+git clone https://github.com/JacobZwoniarski/Hybrid_CNN_for_KMNIST_Classification.git
 cd Hybrid_CNN_for_KMNIST_Classification
 ```
 
