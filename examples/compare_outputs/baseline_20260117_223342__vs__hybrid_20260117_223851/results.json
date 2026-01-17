@@ -1,0 +1,505 @@
+{
+  "meta": {
+    "inputs_dir": "examples/inputs",
+    "baseline_ckpt": "outputs/checkpoints/baseline_20260117_223342/best.pt",
+    "hybrid_ckpt": "outputs/checkpoints/hybrid_20260117_223851/best.pt",
+    "baseline_model_type": "matched_classical",
+    "hybrid_model_type": "hybrid",
+    "device": "cpu",
+    "topk": 3
+  },
+  "items": [
+    {
+      "image": "kmnist_test_000_y2.png",
+      "true_y": 2,
+      "baseline": {
+        "pred_id": 3,
+        "confidence": 0.9816735982894897,
+        "topk": [
+          [
+            3,
+            0.9816735982894897
+          ],
+          [
+            2,
+            0.012995162047445774
+          ],
+          [
+            5,
+            0.0017067959997802973
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 3,
+        "confidence": 0.9899849891662598,
+        "topk": [
+          [
+            3,
+            0.9899849891662598
+          ],
+          [
+            2,
+            0.0026688557118177414
+          ],
+          [
+            5,
+            0.0018530512461438775
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_000_y2__compare.png"
+    },
+    {
+      "image": "kmnist_test_001_y9.png",
+      "true_y": 9,
+      "baseline": {
+        "pred_id": 9,
+        "confidence": 0.9995813965797424,
+        "topk": [
+          [
+            9,
+            0.9995813965797424
+          ],
+          [
+            2,
+            0.00012920772132929415
+          ],
+          [
+            6,
+            0.0001261154975509271
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 9,
+        "confidence": 0.9996401071548462,
+        "topk": [
+          [
+            9,
+            0.9996401071548462
+          ],
+          [
+            1,
+            0.0002935618394985795
+          ],
+          [
+            0,
+            4.3667456338880584e-05
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_001_y9__compare.png"
+    },
+    {
+      "image": "kmnist_test_002_y3.png",
+      "true_y": 3,
+      "baseline": {
+        "pred_id": 3,
+        "confidence": 0.9996299743652344,
+        "topk": [
+          [
+            3,
+            0.9996299743652344
+          ],
+          [
+            0,
+            0.00021164404461160302
+          ],
+          [
+            4,
+            9.441146539757028e-05
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 3,
+        "confidence": 0.9985981583595276,
+        "topk": [
+          [
+            3,
+            0.9985981583595276
+          ],
+          [
+            5,
+            0.0010619903914630413
+          ],
+          [
+            1,
+            0.0002486438606865704
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_002_y3__compare.png"
+    },
+    {
+      "image": "kmnist_test_003_y8.png",
+      "true_y": 8,
+      "baseline": {
+        "pred_id": 8,
+        "confidence": 0.999406099319458,
+        "topk": [
+          [
+            8,
+            0.999406099319458
+          ],
+          [
+            5,
+            0.00035254860995337367
+          ],
+          [
+            9,
+            0.00012210948625579476
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 8,
+        "confidence": 0.9992464780807495,
+        "topk": [
+          [
+            8,
+            0.9992464780807495
+          ],
+          [
+            6,
+            0.0006771335029043257
+          ],
+          [
+            3,
+            3.370843842276372e-05
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_003_y8__compare.png"
+    },
+    {
+      "image": "kmnist_test_004_y3.png",
+      "true_y": 3,
+      "baseline": {
+        "pred_id": 3,
+        "confidence": 0.9991963505744934,
+        "topk": [
+          [
+            3,
+            0.9991963505744934
+          ],
+          [
+            5,
+            0.0007216118392534554
+          ],
+          [
+            2,
+            3.424421447562054e-05
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 3,
+        "confidence": 0.9972195625305176,
+        "topk": [
+          [
+            3,
+            0.9972195625305176
+          ],
+          [
+            5,
+            0.0020634853281080723
+          ],
+          [
+            1,
+            0.00031271876650862396
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_004_y3__compare.png"
+    },
+    {
+      "image": "kmnist_test_005_y3.png",
+      "true_y": 3,
+      "baseline": {
+        "pred_id": 3,
+        "confidence": 0.9995274543762207,
+        "topk": [
+          [
+            3,
+            0.9995274543762207
+          ],
+          [
+            0,
+            0.00027479755226522684
+          ],
+          [
+            4,
+            0.00013055602903477848
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 3,
+        "confidence": 0.9953437447547913,
+        "topk": [
+          [
+            3,
+            0.9953437447547913
+          ],
+          [
+            5,
+            0.0026559450197964907
+          ],
+          [
+            8,
+            0.0012805762235075235
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_005_y3__compare.png"
+    },
+    {
+      "image": "kmnist_test_006_y8.png",
+      "true_y": 8,
+      "baseline": {
+        "pred_id": 8,
+        "confidence": 0.9995660185813904,
+        "topk": [
+          [
+            8,
+            0.9995660185813904
+          ],
+          [
+            5,
+            0.0002576681727077812
+          ],
+          [
+            9,
+            9.320488607045263e-05
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 8,
+        "confidence": 0.9989758729934692,
+        "topk": [
+          [
+            8,
+            0.9989758729934692
+          ],
+          [
+            5,
+            0.0006961246835999191
+          ],
+          [
+            1,
+            0.0002265387010993436
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_006_y8__compare.png"
+    },
+    {
+      "image": "kmnist_test_007_y3.png",
+      "true_y": 3,
+      "baseline": {
+        "pred_id": 3,
+        "confidence": 0.9968552589416504,
+        "topk": [
+          [
+            3,
+            0.9968552589416504
+          ],
+          [
+            5,
+            0.0017423206008970737
+          ],
+          [
+            4,
+            0.0004248163022566587
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 3,
+        "confidence": 0.994041383266449,
+        "topk": [
+          [
+            3,
+            0.994041383266449
+          ],
+          [
+            5,
+            0.0036163057666271925
+          ],
+          [
+            8,
+            0.0010819945018738508
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_007_y3__compare.png"
+    },
+    {
+      "image": "kmnist_test_008_y2.png",
+      "true_y": 2,
+      "baseline": {
+        "pred_id": 2,
+        "confidence": 0.9278207421302795,
+        "topk": [
+          [
+            2,
+            0.9278207421302795
+          ],
+          [
+            7,
+            0.02290220558643341
+          ],
+          [
+            6,
+            0.022216029465198517
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 2,
+        "confidence": 0.9475066661834717,
+        "topk": [
+          [
+            2,
+            0.9475066661834717
+          ],
+          [
+            9,
+            0.023065926507115364
+          ],
+          [
+            6,
+            0.017925992608070374
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_008_y2__compare.png"
+    },
+    {
+      "image": "kmnist_test_009_y5.png",
+      "true_y": 5,
+      "baseline": {
+        "pred_id": 5,
+        "confidence": 0.9982093572616577,
+        "topk": [
+          [
+            5,
+            0.9982093572616577
+          ],
+          [
+            3,
+            0.0008304278017021716
+          ],
+          [
+            0,
+            0.0004594156052917242
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 5,
+        "confidence": 0.9997668862342834,
+        "topk": [
+          [
+            5,
+            0.9997668862342834
+          ],
+          [
+            8,
+            0.0001234107039636001
+          ],
+          [
+            4,
+            5.9754391259048134e-05
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_009_y5__compare.png"
+    },
+    {
+      "image": "kmnist_test_010_y6.png",
+      "true_y": 6,
+      "baseline": {
+        "pred_id": 6,
+        "confidence": 0.9988870024681091,
+        "topk": [
+          [
+            6,
+            0.9988870024681091
+          ],
+          [
+            1,
+            0.0005090876948088408
+          ],
+          [
+            2,
+            0.0004255262902006507
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 6,
+        "confidence": 0.9956037998199463,
+        "topk": [
+          [
+            6,
+            0.9956037998199463
+          ],
+          [
+            8,
+            0.0018991900142282248
+          ],
+          [
+            9,
+            0.0010404078057035804
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_010_y6__compare.png"
+    },
+    {
+      "image": "kmnist_test_011_y3.png",
+      "true_y": 3,
+      "baseline": {
+        "pred_id": 3,
+        "confidence": 0.9988740086555481,
+        "topk": [
+          [
+            3,
+            0.9988740086555481
+          ],
+          [
+            5,
+            0.0010315643157809973
+          ],
+          [
+            1,
+            4.4208831241121516e-05
+          ]
+        ]
+      },
+      "hybrid": {
+        "pred_id": 3,
+        "confidence": 0.9987497329711914,
+        "topk": [
+          [
+            3,
+            0.9987497329711914
+          ],
+          [
+            5,
+            0.000994761474430561
+          ],
+          [
+            1,
+            0.0001491713192081079
+          ]
+        ]
+      },
+      "out_png": "examples/compare_outputs/baseline_20260117_223342__vs__hybrid_20260117_223851/kmnist_test_011_y3__compare.png"
+    }
+  ]
+}
