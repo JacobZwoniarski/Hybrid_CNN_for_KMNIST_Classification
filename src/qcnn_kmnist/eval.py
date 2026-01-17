@@ -1,9 +1,3 @@
-"""
-Eval script entrypoint.
-
-Planned usage:
-python -m qcnn_kmnist.eval --checkpoint outputs/checkpoints/...
-"""
 from __future__ import annotations
 
 import argparse
@@ -17,13 +11,24 @@ from sklearn.metrics import confusion_matrix
 
 from qcnn_kmnist.data.kmnist_datamodule import get_dataloaders
 from qcnn_kmnist.models.baseline_cnn import BaselineCNN
+from qcnn_kmnist.models.hybrid_qcnn import HybridQCNN
+from qcnn_kmnist.models.matched_classical import MatchedClassicalCNN
 from qcnn_kmnist.utils.io import ensure_dir, load_checkpoint, save_json
 from qcnn_kmnist.utils.metrics import compute_metrics
 from qcnn_kmnist.utils.plots import plot_confusion_matrix
 from qcnn_kmnist.utils.seed import set_seed
 
 
-def pick_device() -> torch.device:
+def pick_device(requested: str) -> torch.device:
+    if requested == "cpu":
+        return torch.device("cpu")
+    if requested == "cuda":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if requested == "mps":
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return torch.device("mps")
+        return torch.device("cpu")
+
     if torch.cuda.is_available():
         return torch.device("cuda")
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
@@ -56,12 +61,31 @@ def eval_split(
     return y_true, y_pred
 
 
+def infer_arch_from_state_dict_keys(state_dict: dict) -> str:
+    keys = list(state_dict.keys())
+
+    # MatchedClassicalCNN / HybridQCNN share these blocks:
+    if any(k.startswith("pre_quantum.") for k in keys) and any(k.startswith("post_head.") for k in keys):
+        if any(k.startswith("quantum.") for k in keys) or any(k.startswith("torch_layer.") for k in keys):
+            return "hybrid"
+        if any(k.startswith("classical_middle.") for k in keys):
+            return "matched_classical"
+        # fallback: treat as matched classical if it looks like that pipeline
+        return "matched_classical"
+
+    # Old BaselineCNN pattern
+    if any(k.startswith("classifier.") for k in keys):
+        return "simple_baseline"
+
+    return "unknown"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=str, required=True)
     parser.add_argument("--split", type=str, choices=["val", "test"], default="test")
+    parser.add_argument("--device", type=str, choices=["auto", "cpu", "mps", "cuda"], default="auto")
 
-    # dataloader params (should match training defaults)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--num_workers", type=int, default=2)
     parser.add_argument("--val_fraction", type=float, default=0.1)
@@ -74,13 +98,15 @@ def main() -> None:
 
     ckpt = load_checkpoint(ckpt_path)
     cfg = ckpt.get("config", {})
-    model_name = cfg.get("model", "baseline")
-
-    # Repro (best-effort)
     set_seed(int(cfg.get("seed", 42)))
 
-    device = pick_device()
-    print(f"Device: {device}")
+    # Default CPU for safety/repro (and PennyLane compatibility)
+    requested_device = args.device
+    if requested_device == "auto":
+        requested_device = "cpu"
+
+    device = pick_device(requested_device)
+    print(f"Device: {device} (requested={requested_device})")
 
     loaders = get_dataloaders(
         batch_size=args.batch_size,
@@ -91,14 +117,52 @@ def main() -> None:
         download=True,
     )
 
-    if model_name == "baseline":
-        model = BaselineCNN(num_classes=10)
-    elif model_name == "hybrid":
-        raise SystemExit("Hybrid eval not implemented yet (we will add it after hybrid model).")
-    else:
-        raise ValueError(f"Unknown model type in checkpoint config: {model_name}")
+    # Decide which model to instantiate:
+    model_type = cfg.get("model", None)
+    state_dict = ckpt["model_state"]
 
-    model.load_state_dict(ckpt["model_state"])
+    # If model_type is missing or ambiguous, infer from keys
+    inferred = infer_arch_from_state_dict_keys(state_dict)
+
+    if model_type is None:
+        model_type = inferred
+
+    # IMPORTANT: In this project baseline == matched_classical baseline (fair comparison)
+    if model_type == "baseline":
+        model_type = "matched_classical"
+
+    if model_type == "matched_classical":
+        model = MatchedClassicalCNN(
+            num_classes=10,
+            n_qubits=int(cfg.get("n_qubits", 6)),
+        )
+    elif model_type == "hybrid":
+        model = HybridQCNN(
+            num_classes=10,
+            n_qubits=int(cfg.get("n_qubits", 6)),
+            n_layers=int(cfg.get("n_layers", 2)),
+        )
+    elif model_type == "simple_baseline":
+        model = BaselineCNN(num_classes=10)
+    else:
+        # last resort: use inferred
+        if inferred == "matched_classical":
+            model = MatchedClassicalCNN(num_classes=10, n_qubits=int(cfg.get("n_qubits", 6)))
+            model_type = "matched_classical"
+        elif inferred == "hybrid":
+            model = HybridQCNN(
+                num_classes=10,
+                n_qubits=int(cfg.get("n_qubits", 6)),
+                n_layers=int(cfg.get("n_layers", 2)),
+            )
+            model_type = "hybrid"
+        elif inferred == "simple_baseline":
+            model = BaselineCNN(num_classes=10)
+            model_type = "simple_baseline"
+        else:
+            raise ValueError(f"Cannot determine model architecture from checkpoint (model={cfg.get('model')}, inferred={inferred})")
+
+    model.load_state_dict(state_dict)
     model.to(device)
 
     loader = loaders.val if args.split == "val" else loaders.test
@@ -107,14 +171,16 @@ def main() -> None:
     metrics = compute_metrics(y_true, y_pred)
     cm = confusion_matrix(y_true, y_pred)
 
-    # Name outputs by run folder: outputs/checkpoints/<run_name>/best.pt -> <run_name>
     run_name = ckpt_path.parent.name
-    out_dir = ensure_dir(Path("outputs/predictions") / run_name)
-    fig_dir = ensure_dir(Path("outputs/figures") / run_name)
+    ckpt_tag = ckpt_path.stem  # best / last
+
+    out_dir = ensure_dir(Path("outputs/predictions") / run_name / f"eval_{ckpt_tag}")
+    fig_dir = ensure_dir(Path("outputs/figures") / run_name / f"eval_{ckpt_tag}")
 
     result = {
         "checkpoint": str(ckpt_path),
         "split": args.split,
+        "model_type": model_type,
         "accuracy": metrics.accuracy,
         "f1_macro": metrics.f1_macro,
         "confusion_matrix": cm.tolist(),
@@ -123,24 +189,22 @@ def main() -> None:
 
     class_names = [str(i) for i in range(10)]
     plot_confusion_matrix(
-        cm,
-        class_names,
+        cm, class_names,
         fig_dir / f"confusion_matrix_{args.split}.png",
         title=f"Confusion Matrix ({args.split})",
         normalize=False,
     )
     plot_confusion_matrix(
-        cm,
-        class_names,
+        cm, class_names,
         fig_dir / f"confusion_matrix_{args.split}_norm.png",
         title=f"Confusion Matrix ({args.split}, normalized)",
         normalize=True,
     )
 
+    print(f"Accuracy={metrics.accuracy:.4f} | F1_macro={metrics.f1_macro:.4f}")
     print(f"Saved: {out_dir / f'eval_{args.split}.json'}")
     print(f"Saved: {fig_dir / f'confusion_matrix_{args.split}.png'}")
     print(f"Saved: {fig_dir / f'confusion_matrix_{args.split}_norm.png'}")
-    print(f"Accuracy={metrics.accuracy:.4f} | F1_macro={metrics.f1_macro:.4f}")
 
 
 if __name__ == "__main__":

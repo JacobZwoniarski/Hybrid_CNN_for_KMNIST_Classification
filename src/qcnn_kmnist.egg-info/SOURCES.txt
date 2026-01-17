@@ -3,7 +3,9 @@ pyproject.toml
 src/qcnn_kmnist/__init__.py
 src/qcnn_kmnist/config.py
 src/qcnn_kmnist/eval.py
+src/qcnn_kmnist/generate_examples.py
 src/qcnn_kmnist/infer.py
+src/qcnn_kmnist/qualitative.py
 src/qcnn_kmnist/regen_plots.py
 src/qcnn_kmnist/train.py
 src/qcnn_kmnist.egg-info/PKG-INFO
@@ -15,6 +17,7 @@ src/qcnn_kmnist/data/kmnist_datamodule.py
 src/qcnn_kmnist/models/__init__.py
 src/qcnn_kmnist/models/baseline_cnn.py
 src/qcnn_kmnist/models/hybrid_qcnn.py
+src/qcnn_kmnist/models/matched_classical.py
 src/qcnn_kmnist/models/quantum_layer.py
 src/qcnn_kmnist/utils/__init__.py
 src/qcnn_kmnist/utils/io.py

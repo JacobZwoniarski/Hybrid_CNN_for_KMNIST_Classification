@@ -3,19 +3,19 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from qcnn_kmnist.models.quantum_layer import QuantumLayer
 
-
-class HybridQCNN(nn.Module):
+class MatchedClassicalCNN(nn.Module):
     """
-    Hybrid CNN matched to MatchedClassicalCNN:
-      conv features -> pre_quantum (to n_qubits) -> QuantumLayer -> post_head -> logits
+    Architecture matched to HybridQCNN:
+      conv features -> pre_quantum (to n_qubits) -> classical_middle -> post_head -> logits
+
+    This is the "baseline" for fair comparison: same shape flow as HybridQCNN,
+    only replacing the quantum layer with a classical block.
     """
 
-    def __init__(self, num_classes: int = 10, n_qubits: int = 6, n_layers: int = 2) -> None:
+    def __init__(self, num_classes: int = 10, n_qubits: int = 6) -> None:
         super().__init__()
         self.n_qubits = n_qubits
-        self.n_layers = n_layers
 
         self.features = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=3, padding=1),
@@ -34,7 +34,11 @@ class HybridQCNN(nn.Module):
             nn.Linear(128, n_qubits),
         )
 
-        self.quantum = QuantumLayer(n_qubits=n_qubits, n_layers=n_layers)
+        # Classical replacement: (B, n_qubits) -> (B, n_qubits)
+        self.classical_middle = nn.Sequential(
+            nn.Linear(n_qubits, n_qubits),
+            nn.Tanh(),
+        )
 
         self.post_head = nn.Sequential(
             nn.Linear(n_qubits, 32),
@@ -46,6 +50,6 @@ class HybridQCNN(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.features(x)
         x = self.pre_quantum(x)
-        x = self.quantum(x)
+        x = self.classical_middle(x)
         x = self.post_head(x)
         return x

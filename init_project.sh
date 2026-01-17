@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Ustawienie katalogu na bieżący
 PROJECT_DIR="."
 
-mkdir -p "${PROJECT_DIR}"/{src/models,src/quantum,scripts,assets,outputs/{checkpoints,logs,figures,metrics},reports/latex}
+echo "Inicjalizacja struktury projektu w bieżącym katalogu..."
+
+# Tworzenie struktury katalogów
+mkdir -p "${PROJECT_DIR}"/{src/qcnn_kmnist,scripts,assets,outputs/{checkpoints,logs,figures,predictions,comparisons},examples/{inputs,outputs}}
 
 # ---------- .gitignore ----------
 cat > "${PROJECT_DIR}/.gitignore" << 'EOF'
@@ -13,66 +17,224 @@ __pycache__/
 *.pyo
 *.pyd
 .ipynb_checkpoints/
-
-# Environments
 .venv/
 venv/
 env/
-.conda/
-
-# OS / IDE
 .DS_Store
 .idea/
 .vscode/
 
-# Data & outputs (do not commit)
-data/
+# Outputs & Data
 outputs/
+data/
 reports/build/
-
-# Logs
 *.log
 EOF
 
 # ---------- requirements.txt ----------
 cat > "${PROJECT_DIR}/requirements.txt" << 'EOF'
-# Core
 numpy
 matplotlib
 tqdm
 pyyaml
 scikit-learn
-
-# Deep learning + dataset
+pandas
 torch
 torchvision
-
-# Quantum layer
 pennylane
 pennylane-lightning
 EOF
 
-# ---------- README.md ----------
+# ---------- README.md (Pełna zawartość) ----------
 cat > "${PROJECT_DIR}/README.md" << 'EOF'
-# Hybrid CNN + Quantum Head on KMNIST (PennyLane + PyTorch)
+# Hybrid CNN + Quantum Layer for KMNIST (PyTorch + PennyLane)
 
-## Quickstart
+Projekt na przedmiot **Uczenie Maszynowe**: porównanie dwóch modeli na zbiorze **KMNIST**:
+- **baseline (matched classical)** – klasyczna sieć CNN z “dopasowaną” architekturą (fair baseline)
+- **hybrid (quantum)** – ta sama architektura, ale z dodatkową **warstwą kwantową** (PennyLane) w miejscu klasycznego bloku pośredniego
+
+Projekt zawiera:
+- trening, ewaluację, wykresy i confusion matrix,
+- “fair comparison” (baseline vs hybrid przy tych samych hiperparametrach),
+- inference na nowych danych (PNG -> predykcja + top-k),
+- przykładowe wejścia/wyjścia do infer (bez dołączania całego datasetu).
+
+## Struktura repo (skrót)
+- `src/qcnn_kmnist/` – kod źródłowy (train/eval/infer/plots)
+- `scripts/` – skrypty bash do uruchamiania pipeline’u
+- `outputs/` – logi, checkpointy, wykresy, porównania (generowane)
+- `examples/inputs/` – przykładowe wejścia do infer (PNG)
+- `examples/outputs/` – przykładowe wyjścia infer (JSON)
+
+## Wymagania
+- Python 3.9+ (testowane na 3.11)
+- pip
+- System z bash (Mac/Linux; na Windows najlepiej Git Bash/WSL)
+- Dla hybrydy rekomendowane uruchamianie na CPU (PennyLane + torch + MPS bywa problematyczne)
+
+---
+
+# Wariant 1: Prowadząca odtwarza środowisko i uruchamia trening + porównanie
+
+## 1) Klon repo
 ```bash
-python -m venv .venv
+git clone <REPO_URL>
+cd Hybrid_CNN_for_KMNIST_Classification
+```
+
+## 2) Utworzenie i aktywacja środowiska (venv)
+Jeśli masz skrypt:
+```bash
+bash scripts/setup_venv.sh
 source .venv/bin/activate
+```
+Jeśli bez skryptu (ręcznie):
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+```
+
+## 3) Instalacja zależności
+```bash
 pip install -r requirements.txt
+```
 
-# (Optional) pre-download dataset
-python scripts/download_data.py
+## 4) Instalacja projektu (żeby działało python -m qcnn_kmnist...)
+```bash
+pip install -e .
+```
 
-# Train baseline
-python -m src.train --model baseline
+## Trening modeli
+Trening baseline (matched classical)
+```bash
+bash scripts/train_baseline.sh
+```
+Trening hybrydy (quantum)
+```bash
+bash scripts/train_hybrid.sh
+```
 
-# Train hybrid
-python -m src.train --model hybrid --n_qubits 6 --q_depth 2
+## Ewaluacja (test) + confusion matrix
+Ewaluacja baseline (latest)
+```bash
+bash scripts/eval_latest.sh
+```
+Ewaluacja hybrydy (latest)
+```bash
+bash scripts/eval_latest_hybrid.sh
+```
+Wyniki zapisują się jako:
+- `outputs/predictions/<run_name>/eval_best/eval_test.json`
+- `outputs/figures/<run_name>/eval_best/confusion_matrix_test.png`
+- `outputs/figures/<run_name>/eval_best/confusion_matrix_test_norm.png`
 
-# Evaluate (choose checkpoint)
-python -m src.eval --ckpt outputs/checkpoints/latest.pt
+## Fair comparison (baseline vs hybrid tymi samymi parametrami)
+To jest docelowy sposób porównania (identyczne hiperparametry, seed, bottleneck).
+Przykład dla najlepszej konfiguracji hybrydy:
+```bash
+N_QUBITS=6 N_LAYERS=3 EPOCHS=15 LR=5e-4 bash scripts/run_fair_comparison.sh
+```
+Wynik porównania:
+- `outputs/comparisons/<timestamp>/summary.json`
+- `outputs/comparisons/<timestamp>/summary.csv`
+- `outputs/comparisons/<timestamp>/figures/` (kopie confusion-matrix)
 
-# Inference on example input
-python -m src.infer --input assets/example_input.npy --output outputs/metrics/example_preds.json
+Uwaga: `N_LAYERS` nie wpływa na baseline (klasyczny), ale baseline używa `N_QUBITS` jako wymiaru bottlenecku, więc porównanie pozostaje “fair”.
+
+## Wizualizacje jakościowe (co widzi model + top błędy)
+Generuje:
+- siatkę predykcji z confidence,
+- histogram pewności,
+- “najbardziej pewne błędy”.
+
+```bash
+bash scripts/qual_latest.sh
+```
+Pliki trafiają do:
+`outputs/figures/<run_name>/qualitative_best/`
+
+---
+
+# Wariant 2: Prowadząca testuje wytrenowane modele na “nowych danych” (infer)
+Ten wariant nie wymaga trenowania. Prowadząca uruchamia infer na kilku obrazkach PNG i dostaje wyniki w JSON.
+
+## 1) Utworzenie środowiska + zależności
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+pip install -e .
+```
+
+## 2) Checkpointy modeli
+Repo powinno zawierać checkpointy w:
+- `outputs/checkpoints/baseline_*/best.pt`
+- `outputs/checkpoints/hybrid_*/best.pt`
+
+Jeśli ich nie ma, trzeba je dodać do archiwum na Moodle albo wykonać trening z Wariantu 1.
+
+## 3) Przykładowe wejścia (kilka PNG)
+W repo są już przykładowe wejścia w `examples/inputs/`.
+Jeśli ich nie ma, można je wygenerować (pobierze KMNIST, ale zapisze tylko kilka PNG):
+```bash
+bash scripts/generate_examples.sh
+```
+
+## 4) Infer (predykcje na przykładach)
+Infer dla baseline (najświeższy checkpoint)
+```bash
+MODEL=baseline bash scripts/infer_example.sh
+```
+Infer dla hybrydy (najświeższy checkpoint)
+```bash
+MODEL=hybrid bash scripts/infer_example.sh
+```
+Wyniki zapisują się jako JSON-y w:
+`examples/outputs/<run_name>/*.json`
+
+Każdy JSON zawiera m.in.:
+- `pred_id`, `pred_name`
+- `confidence`
+- `topk` (lista top-k klas z prawdopodobieństwami)
+
+### Infer na własnym obrazku PNG (opcjonalnie)
+Jeśli prowadząca chce sprawdzić pojedynczy plik `my.png` (najlepiej 28x28, grayscale):
+```bash
+python -m qcnn_kmnist.infer --checkpoint outputs/checkpoints/baseline_*/best.pt --image my.png --device cpu
+```
+
+## Najczęstsze problemy
+
+**pip install -e . nie działa**
+Upewnij się, że w root repo jest `pyproject.toml`, a potem:
+```bash
+pip install -e .
+```
+
+**Hybryda działa wolno**
+To normalne: symulacja obwodu kwantowego na CPU jest kosztowna.
+Dla odtwarzalności rekomendowane jest uruchamianie hybrydy na CPU.
+
+## Quickstart (podsumowanie komend)
+
+**Trening + porównanie:**
+```bash
+bash scripts/train_baseline.sh
+bash scripts/train_hybrid.sh
+bash scripts/eval_latest.sh
+bash scripts/eval_latest_hybrid.sh
+N_QUBITS=6 N_LAYERS=3 bash scripts/run_fair_comparison.sh
+```
+
+**Infer na przykładach:**
+```bash
+bash scripts/generate_examples.sh
+MODEL=baseline bash scripts/infer_example.sh
+MODEL=hybrid bash scripts/infer_example.sh
+```
+EOF
+
+chmod +x "${PROJECT_DIR}/init_project.sh"
+echo "Project initialized in ${PROJECT_DIR}"

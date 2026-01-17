@@ -1,11 +1,3 @@
-"""
-Train script entrypoint.
-
-Planned usage:
-python -m qcnn_kmnist.train --model baseline
-python -m qcnn_kmnist.train --model hybrid --n_qubits 6 --n_layers 2
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -20,13 +12,24 @@ from tqdm import tqdm
 
 from qcnn_kmnist.data.kmnist_datamodule import get_dataloaders
 from qcnn_kmnist.models.baseline_cnn import BaselineCNN
+from qcnn_kmnist.models.hybrid_qcnn import HybridQCNN
+from qcnn_kmnist.models.matched_classical import MatchedClassicalCNN
 from qcnn_kmnist.utils.io import ensure_dir, save_checkpoint, save_json
 from qcnn_kmnist.utils.metrics import compute_metrics
 from qcnn_kmnist.utils.plots import plot_curve
 from qcnn_kmnist.utils.seed import set_seed
 
 
-def pick_device() -> torch.device:
+def pick_device(requested: str) -> torch.device:
+    if requested == "cpu":
+        return torch.device("cpu")
+    if requested == "cuda":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if requested == "mps":
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return torch.device("mps")
+        return torch.device("cpu")
+
     if torch.cuda.is_available():
         return torch.device("cuda")
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
@@ -94,32 +97,35 @@ def train_one_epoch(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, choices=["baseline", "hybrid"], required=True)
 
-    parser.add_argument("--epochs", type=int, default=5)
+    # baseline is now the matched classical baseline (fair comparison)
+    parser.add_argument("--model", type=str, choices=["baseline", "hybrid", "simple_baseline"], required=True)
+
+    parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--weight_decay", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num_workers", type=int, default=2)
     parser.add_argument("--val_fraction", type=float, default=0.1)
 
-    # Hybrid params (not used yet, but kept for CLI compatibility)
+    parser.add_argument("--device", type=str, choices=["auto", "cpu", "mps", "cuda"], default="auto")
+
+    # shared params for baseline/hybrid
     parser.add_argument("--n_qubits", type=int, default=6)
     parser.add_argument("--n_layers", type=int, default=2)
 
     args = parser.parse_args()
 
-    if args.model == "hybrid":
-        raise SystemExit(
-            "Hybrid not implemented yet. Run baseline now. "
-            "Next step we will implement PennyLane QuantumLayer + Hybrid model."
-        )
-
     set_seed(args.seed)
 
-    device = pick_device()
-    print(f"Device: {device}")
+    # Default to CPU for fair comparison and to avoid PL+MPS issues
+    requested_device = args.device
+    if requested_device == "auto":
+        requested_device = "cpu"
+
+    device = pick_device(requested_device)
+    print(f"Device: {device} (requested={requested_device})")
 
     loaders = get_dataloaders(
         batch_size=args.batch_size,
@@ -130,7 +136,14 @@ def main() -> None:
         download=True,
     )
 
-    model = BaselineCNN(num_classes=10).to(device)
+    if args.model == "baseline":
+        model: nn.Module = MatchedClassicalCNN(num_classes=10, n_qubits=args.n_qubits).to(device)
+    elif args.model == "hybrid":
+        model = HybridQCNN(num_classes=10, n_qubits=args.n_qubits, n_layers=args.n_layers).to(device)
+    else:
+        # keep old simple baseline if you want it
+        model = BaselineCNN(num_classes=10).to(device)
+
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
@@ -165,7 +178,6 @@ def main() -> None:
             f"val_acc={val_acc:.4f} | val_f1_macro={val_f1:.4f}"
         )
 
-        # Save best checkpoint
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             save_checkpoint(
@@ -178,7 +190,6 @@ def main() -> None:
                 },
             )
 
-        # Always save last
         save_checkpoint(
             ckpt_dir / "last.pt",
             {
@@ -191,10 +202,9 @@ def main() -> None:
 
         save_json(run_dir / "history.json", history)
 
-    # Final plots
-    plot_curve(history["train_loss"], "Train Loss", "loss", fig_dir / "train_loss.png")
-    plot_curve(history["val_loss"], "Val Loss", "loss", fig_dir / "val_loss.png")
-    plot_curve(history["val_acc"], "Val Accuracy", "acc", fig_dir / "val_acc.png")
+    plot_curve(history["train_loss"], "Train Loss", "Loss", fig_dir / "train_loss.png")
+    plot_curve(history["val_loss"], "Val Loss", "Loss", fig_dir / "val_loss.png")
+    plot_curve(history["val_acc"], "Val Accuracy", "Accuracy", fig_dir / "val_acc.png", force_ylim=(0.0, 1.0))
 
     print("\nDone.")
     print(f"Run dir: {run_dir}")

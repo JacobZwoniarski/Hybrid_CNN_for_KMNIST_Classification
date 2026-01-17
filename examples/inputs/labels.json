@@ -1,0 +1,55 @@
+{
+  "dataset": "KMNIST",
+  "split": "test",
+  "n": 12,
+  "labels": {
+    "kmnist_test_000_y2.png": {
+      "y": 2,
+      "name": "su"
+    },
+    "kmnist_test_001_y9.png": {
+      "y": 9,
+      "name": "wo"
+    },
+    "kmnist_test_002_y3.png": {
+      "y": 3,
+      "name": "tsu"
+    },
+    "kmnist_test_003_y8.png": {
+      "y": 8,
+      "name": "re"
+    },
+    "kmnist_test_004_y3.png": {
+      "y": 3,
+      "name": "tsu"
+    },
+    "kmnist_test_005_y3.png": {
+      "y": 3,
+      "name": "tsu"
+    },
+    "kmnist_test_006_y8.png": {
+      "y": 8,
+      "name": "re"
+    },
+    "kmnist_test_007_y3.png": {
+      "y": 3,
+      "name": "tsu"
+    },
+    "kmnist_test_008_y2.png": {
+      "y": 2,
+      "name": "su"
+    },
+    "kmnist_test_009_y5.png": {
+      "y": 5,
+      "name": "ha"
+    },
+    "kmnist_test_010_y6.png": {
+      "y": 6,
+      "name": "ma"
+    },
+    "kmnist_test_011_y3.png": {
+      "y": 3,
+      "name": "tsu"
+    }
+  }
+}
