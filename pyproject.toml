@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qcnn-kmnist"
+version = "0.1.0"
+description = "CNN vs Hybrid QCNN head for KMNIST"
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["src"]
