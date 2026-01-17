@@ -4,6 +4,7 @@ src/qcnn_kmnist/__init__.py
 src/qcnn_kmnist/config.py
 src/qcnn_kmnist/eval.py
 src/qcnn_kmnist/infer.py
+src/qcnn_kmnist/regen_plots.py
 src/qcnn_kmnist/train.py
 src/qcnn_kmnist.egg-info/PKG-INFO
 src/qcnn_kmnist.egg-info/SOURCES.txt
