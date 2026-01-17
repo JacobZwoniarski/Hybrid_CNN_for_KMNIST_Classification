@@ -1,9 +1,0 @@
-{
-  "inputs_dir": "examples/inputs",
-  "baseline_ckpt": "outputs/checkpoints/baseline_20260117_223342/best.pt",
-  "hybrid_ckpt": "outputs/checkpoints/hybrid_20260117_223851/best.pt",
-  "baseline_model_type": "matched_classical",
-  "hybrid_model_type": "hybrid",
-  "device": "cpu",
-  "topk": 3
-}

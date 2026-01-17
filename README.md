@@ -149,21 +149,6 @@ Każdy JSON zawiera m.in.:
 - `confidence`
 - `topk` (lista top-k klas z prawdopodobieństwami)
 
-## Porównawcze PNG: baseline vs hybrid (Top-3 na jednym obrazku)
-
-Skrypt generuje dla każdego PNG z `examples/inputs/` osobny obrazek porównawczy:
-- u góry: wejściowy obrazek + true label (jeśli dostępny)
-- na dole: Top-3 prawdopodobieństwa dla baseline oraz hybrid
-
-Uruchom:
-```bash
-source .venv/bin/activate
-pip install -e .
-bash scripts/infer_compare_plots.sh
-```
-Wyniki zapisują się w:
-`examples/compare_outputs/<baselineRun>__vs__<hybridRun>/`
-
 ### Infer na własnym obrazku PNG (opcjonalnie)
 Jeśli chce się sprawdzić pojedynczy plik `my.png` (najlepiej 28x28, grayscale):
 ```bash
